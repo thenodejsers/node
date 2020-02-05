@@ -90,7 +90,7 @@ namespace node {
 #else
 #define NODE_ASYNC_INSPECTOR_PROVIDER_TYPES(V)
 #endif  // HAVE_INSPECTOR
-
+// 对上面三种类型的宏定义的封装
 #define NODE_ASYNC_PROVIDER_TYPES(V)                                          \
   NODE_ASYNC_NON_CRYPTO_PROVIDER_TYPES(V)                                     \
   NODE_ASYNC_CRYPTO_PROVIDER_TYPES(V)                                         \
@@ -102,6 +102,7 @@ class DestroyParam;
 class AsyncWrap : public BaseObject {
  public:
   enum ProviderType {
+// 定义所有的provider类型，见上面的所有list，PROVIDER_ ## PROVIDER = PROVIDER_PROVIDER的值
 #define V(PROVIDER)                                                           \
     PROVIDER_ ## PROVIDER,
     NODE_ASYNC_PROVIDER_TYPES(V)

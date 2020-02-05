@@ -473,13 +473,13 @@ void StreamResource::ClearError() {
   // No-op
 }
 
-
+// 分配一块内存
 uv_buf_t EmitToJSStreamListener::OnStreamAlloc(size_t suggested_size) {
   CHECK_NOT_NULL(stream_);
   Environment* env = static_cast<StreamBase*>(stream_)->stream_env();
   return env->AllocateManaged(suggested_size).release();
 }
-
+// 
 void EmitToJSStreamListener::OnStreamRead(ssize_t nread, const uv_buf_t& buf_) {
   CHECK_NOT_NULL(stream_);
   StreamBase* stream = static_cast<StreamBase*>(stream_);

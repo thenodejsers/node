@@ -59,7 +59,7 @@ using v8::WeakCallbackType;
 using TryCatchScope = node::errors::TryCatchScope;
 
 namespace node {
-
+// 定义一个字符指针数组，#PROVIDER="PROVIDER"
 static const char* const provider_names[] = {
 #define V(PROVIDER)                                                           \
   #PROVIDER,

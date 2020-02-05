@@ -978,10 +978,10 @@ inline AllocatedBuffer Environment::AllocateManaged(size_t size, bool checked) {
   if (data == nullptr) size = 0;
   return AllocatedBuffer(this, uv_buf_init(data, size));
 }
-
+// 新建一个buffer对象，是对uv_buf_t的封装
 inline AllocatedBuffer::AllocatedBuffer(Environment* env, uv_buf_t buf)
     : env_(env), buffer_(buf) {}
-
+// 扩容
 inline void AllocatedBuffer::Resize(size_t len) {
   // The `len` check is to make sure we don't end up with `nullptr` as our base.
   char* new_data = env_->Reallocate(buffer_.base, buffer_.len,
@@ -989,13 +989,13 @@ inline void AllocatedBuffer::Resize(size_t len) {
   CHECK_NOT_NULL(new_data);
   buffer_ = uv_buf_init(new_data, len);
 }
-
+// 重置buffer，但是没有不释放内存
 inline uv_buf_t AllocatedBuffer::release() {
   uv_buf_t ret = buffer_;
   buffer_ = uv_buf_init(nullptr, 0);
   return ret;
 }
-
+// 返回数据首地址
 inline char* AllocatedBuffer::data() {
   return buffer_.base;
 }
@@ -1003,22 +1003,23 @@ inline char* AllocatedBuffer::data() {
 inline const char* AllocatedBuffer::data() const {
   return buffer_.base;
 }
-
+// 返回数据长度
 inline size_t AllocatedBuffer::size() const {
   return buffer_.len;
 }
-
+// 只传了env，buffer初始化为空
 inline AllocatedBuffer::AllocatedBuffer(Environment* env)
     : env_(env), buffer_(uv_buf_init(nullptr, 0)) {}
-
+// 复制构造函数，&&表示右值引用 
 inline AllocatedBuffer::AllocatedBuffer(AllocatedBuffer&& other)
     : AllocatedBuffer() {
   *this = std::move(other);
 }
-
+// 赋值构造函数
 inline AllocatedBuffer& AllocatedBuffer::operator=(AllocatedBuffer&& other) {
   clear();
   env_ = other.env_;
+  // 把buffer里的数据赋给buffer_，重置other里的buffer
   buffer_ = other.release();
   return *this;
 }
@@ -1026,7 +1027,7 @@ inline AllocatedBuffer& AllocatedBuffer::operator=(AllocatedBuffer&& other) {
 inline AllocatedBuffer::~AllocatedBuffer() {
   clear();
 }
-
+// 释放buffer
 inline void AllocatedBuffer::clear() {
   uv_buf_t buf = release();
   env_->Free(buf.base, buf.len);
@@ -1040,10 +1041,11 @@ v8::MaybeLocal<v8::Object> New(Environment* env,
                                size_t length,
                                bool uses_malloc);
 }
-
+// 转成Buffer对象
 inline v8::MaybeLocal<v8::Object> AllocatedBuffer::ToBuffer() {
   CHECK_NOT_NULL(env_);
   v8::MaybeLocal<v8::Object> obj = Buffer::New(env_, data(), size(), false);
+  // 新建成功，重置buffer
   if (!obj.IsEmpty()) release();
   return obj;
 }

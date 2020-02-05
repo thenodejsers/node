@@ -49,7 +49,7 @@ inline double AsyncWrap::get_trigger_async_id() const {
   return trigger_async_id_;
 }
 
-
+// 重载
 inline v8::MaybeLocal<v8::Value> AsyncWrap::MakeCallback(
     const v8::Local<v8::String> symbol,
     int argc,
@@ -65,19 +65,22 @@ inline v8::MaybeLocal<v8::Value> AsyncWrap::MakeCallback(
   return MakeCallback(symbol.As<v8::Name>(), argc, argv);
 }
 
-
+// 这个才是正在的处理函数
 inline v8::MaybeLocal<v8::Value> AsyncWrap::MakeCallback(
     const v8::Local<v8::Name> symbol,
     int argc,
     v8::Local<v8::Value>* argv) {
   v8::Local<v8::Value> cb_v;
+  // 根据字符串表示的属性值，从对象中取出该属性对应的值。是个函数
   if (!object()->Get(env()->context(), symbol).ToLocal(&cb_v))
     return v8::MaybeLocal<v8::Value>();
+  // 要是个函数
   if (!cb_v->IsFunction()) {
     // TODO(addaleax): We should throw an error here to fulfill the
     // `MaybeLocal<>` API contract.
     return v8::MaybeLocal<v8::Value>();
   }
+  // 回调,见async_wrap.cc
   return MakeCallback(cb_v.As<v8::Function>(), argc, argv);
 }
 

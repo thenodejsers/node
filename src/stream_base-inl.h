@@ -41,7 +41,7 @@ inline void StreamReq::Dispose() {
 inline v8::Local<v8::Object> StreamReq::object() {
   return GetAsyncWrap()->object();
 }
-
+// 从listen所属的流的listener队列中删除自己
 inline StreamListener::~StreamListener() {
   if (stream_ != nullptr)
     stream_->RemoveStreamListener(this);
@@ -61,7 +61,7 @@ inline void StreamListener::OnStreamAfterWrite(WriteWrap* w, int status) {
   CHECK_NOT_NULL(previous_listener_);
   previous_listener_->OnStreamAfterWrite(w, status);
 }
-
+// 逐个销毁listener然后把它从队列中删除
 inline StreamResource::~StreamResource() {
   while (listener_ != nullptr) {
     StreamListener* listener = listener_;
@@ -74,41 +74,43 @@ inline StreamResource::~StreamResource() {
       RemoveStreamListener(listener_);
   }
 }
-
+// 增加一个listener
 inline void StreamResource::PushStreamListener(StreamListener* listener) {
   CHECK_NOT_NULL(listener);
   CHECK_NULL(listener->stream_);
-
+  // 头插法 
   listener->previous_listener_ = listener_;
   listener->stream_ = this;
 
   listener_ = listener;
 }
-
+// 删除listener
 inline void StreamResource::RemoveStreamListener(StreamListener* listener) {
   CHECK_NOT_NULL(listener);
 
   StreamListener* previous;
   StreamListener* current;
 
-  // Remove from the linked list.
+  // Remove from the linked list. 遍历单链表
   for (current = listener_, previous = nullptr;
        /* No loop condition because we want a crash if listener is not found */
        ; previous = current, current = current->previous_listener_) {
     CHECK_NOT_NULL(current);
     if (current == listener) {
+      // 非空说明需要删除的不是第一个节点
       if (previous != nullptr)
         previous->previous_listener_ = current->previous_listener_;
       else
+        // 删除的是第一个节点，更新头指针就行
         listener_ = listener->previous_listener_;
       break;
     }
   }
-
+  // 重置
   listener->stream_ = nullptr;
   listener->previous_listener_ = nullptr;
 }
-
+// 申请一块内存
 inline uv_buf_t StreamResource::EmitAlloc(size_t suggested_size) {
   DebugSealHandleScope handle_scope(v8::Isolate::GetCurrent());
   return listener_->OnStreamAlloc(suggested_size);
@@ -116,6 +118,7 @@ inline uv_buf_t StreamResource::EmitAlloc(size_t suggested_size) {
 
 inline void StreamResource::EmitRead(ssize_t nread, const uv_buf_t& buf) {
   DebugSealHandleScope handle_scope(v8::Isolate::GetCurrent());
+  // bytes_read_表示已读的字节数
   if (nread > 0)
     bytes_read_ += static_cast<uint64_t>(nread);
   listener_->OnStreamRead(nread, buf);
