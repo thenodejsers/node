@@ -73,21 +73,23 @@ void TCPWrap::Initialize(Local<Object> target,
                          Local<Context> context,
                          void* priv) {
   Environment* env = Environment::GetCurrent(context);
-
+  // 以New为模板新建一个函数
   Local<FunctionTemplate> t = env->NewFunctionTemplate(New);
   Local<String> tcpString = FIXED_ONE_BYTE_STRING(env->isolate(), "TCP");
+  // 函数名
   t->SetClassName(tcpString);
   t->InstanceTemplate()
     ->SetInternalFieldCount(StreamBase::kStreamBaseFieldCount);
 
   // Init properties
+  // 设置实例的属性，实例是执行new TCP时返回的对象
   t->InstanceTemplate()->Set(FIXED_ONE_BYTE_STRING(env->isolate(), "reading"),
                              Boolean::New(env->isolate(), false));
   t->InstanceTemplate()->Set(env->owner_symbol(), Null(env->isolate()));
   t->InstanceTemplate()->Set(env->onconnection_string(), Null(env->isolate()));
 
   t->Inherit(LibuvStreamWrap::GetConstructorTemplate(env));
-
+  // 设置t的原型方法，即TCP.prototype的属性
   env->SetProtoMethod(t, "open", Open);
   env->SetProtoMethod(t, "bind", Bind);
   env->SetProtoMethod(t, "listen", Listen);
@@ -104,7 +106,7 @@ void TCPWrap::Initialize(Local<Object> target,
 #ifdef _WIN32
   env->SetProtoMethod(t, "setSimultaneousAccepts", SetSimultaneousAccepts);
 #endif
-
+  // target为导出的对象，设置对象的TCP属性
   target->Set(env->context(),
               tcpString,
               t->GetFunction(env->context()).ToLocalChecked()).Check();
@@ -117,11 +119,13 @@ void TCPWrap::Initialize(Local<Object> target,
   Local<String> wrapString =
       FIXED_ONE_BYTE_STRING(env->isolate(), "TCPConnectWrap");
   cwt->SetClassName(wrapString);
+  // 设置对象的TCPConnectWrap属性 
   target->Set(env->context(),
               wrapString,
               cwt->GetFunction(env->context()).ToLocalChecked()).Check();
 
   // Define constants
+  // 设置对象的constant属性 
   Local<Object> constants = Object::New(env->isolate());
   NODE_DEFINE_CONSTANT(constants, SOCKET);
   NODE_DEFINE_CONSTANT(constants, SERVER);
@@ -136,7 +140,9 @@ void TCPWrap::New(const FunctionCallbackInfo<Value>& args) {
   // This constructor should not be exposed to public javascript.
   // Therefore we assert that we are not trying to call this as a
   // normal function.
+  // 要以new TCP的形式调用
   CHECK(args.IsConstructCall());
+  // 第一个入参是数字
   CHECK(args[0]->IsInt32());
   Environment* env = Environment::GetCurrent(args);
 
@@ -161,6 +167,7 @@ void TCPWrap::New(const FunctionCallbackInfo<Value>& args) {
 
 TCPWrap::TCPWrap(Environment* env, Local<Object> object, ProviderType provider)
     : ConnectionWrap(env, object, provider) {
+  // 初始化一个tcp handle
   int r = uv_tcp_init(env->event_loop(), &handle_);
   CHECK_EQ(r, 0);  // How do we proxy this error up to javascript?
                    // Suggestion: uv_tcp_init() returns void.
@@ -169,15 +176,17 @@ TCPWrap::TCPWrap(Environment* env, Local<Object> object, ProviderType provider)
 
 void TCPWrap::SetNoDelay(const FunctionCallbackInfo<Value>& args) {
   TCPWrap* wrap;
+  // wrap等于Holder返回的值，如果返回未nul，则取第三个参数的值
   ASSIGN_OR_RETURN_UNWRAP(&wrap,
                           args.Holder(),
                           args.GetReturnValue().Set(UV_EBADF));
   int enable = static_cast<int>(args[0]->IsTrue());
+  // wrap即TCPWwrap的实例对象，设置是否开启nagle算法
   int err = uv_tcp_nodelay(&wrap->handle_, enable);
   args.GetReturnValue().Set(err);
 }
 
-
+// 设置长连接是否开启，时间。
 void TCPWrap::SetKeepAlive(const FunctionCallbackInfo<Value>& args) {
   TCPWrap* wrap;
   ASSIGN_OR_RETURN_UNWRAP(&wrap,
@@ -213,7 +222,9 @@ void TCPWrap::Open(const FunctionCallbackInfo<Value>& args) {
   int64_t val;
   if (!args[0]->IntegerValue(args.GetIsolate()->GetCurrentContext()).To(&val))
     return;
+  // open的第一个参数是一个文件描述符
   int fd = static_cast<int>(val);
+  // 把fd记录在handle里（handle的io观察者里）
   int err = uv_tcp_open(&wrap->handle_, fd);
 
   if (err == 0)
@@ -236,6 +247,7 @@ void TCPWrap::Bind(
   int port;
   unsigned int flags = 0;
   if (!args[1]->Int32Value(env->context()).To(&port)) return;
+  // ipv6才有flags参数
   if (family == AF_INET6 &&
       !args[2]->Uint32Value(env->context()).To(&flags)) {
     return;
@@ -245,6 +257,7 @@ void TCPWrap::Bind(
   int err = uv_ip_addr(*ip_address, port, &addr);
 
   if (err == 0) {
+    // 绑定地址
     err = uv_tcp_bind(&wrap->handle_,
                       reinterpret_cast<const sockaddr*>(&addr),
                       flags);
@@ -270,6 +283,7 @@ void TCPWrap::Listen(const FunctionCallbackInfo<Value>& args) {
   Environment* env = wrap->env();
   int backlog;
   if (!args[0]->Int32Value(env->context()).To(&backlog)) return;
+  // OnConnection为有新建立的连接时触发的回调（已完成三次握手） 
   int err = uv_listen(reinterpret_cast<uv_stream_t*>(&wrap->handle_),
                       backlog,
                       OnConnection);
@@ -279,7 +293,9 @@ void TCPWrap::Listen(const FunctionCallbackInfo<Value>& args) {
 
 void TCPWrap::Connect(const FunctionCallbackInfo<Value>& args) {
   CHECK(args[2]->IsUint32());
+  // 第三个参数是端口，第二个是ip，第一个是TCPConnectWrap对象
   int port = args[2].As<Uint32>()->Value();
+  // 第二个参数是一个函数，并带有上下文port
   Connect<sockaddr_in>(args,
                        [port](const char* ip_address, sockaddr_in* addr) {
       return uv_ip4_addr(ip_address, port, addr);
@@ -310,11 +326,13 @@ void TCPWrap::Connect(const FunctionCallbackInfo<Value>& args,
 
   CHECK(args[0]->IsObject());
   CHECK(args[1]->IsString());
-
+  // 第一个参数是TCPConnectWrap对象
   Local<Object> req_wrap_obj = args[0].As<Object>();
+  // 第二个是ip地址
   node::Utf8Value ip_address(env->isolate(), args[1]);
 
   T addr;
+  // 把端口，ip设置到addr上，端口信息在uv_ip_addr上下文里了
   int err = uv_ip_addr(*ip_address, &addr);
 
   if (err == 0) {

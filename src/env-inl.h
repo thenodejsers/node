@@ -1148,11 +1148,14 @@ inline void Environment::SetMethodNoSideEffect(v8::Local<v8::Object> that,
   that->Set(context, name_string, function).Check();
   function->SetName(name_string);  // NODE_SET_METHOD() compatibility.
 }
-
+/*
+  设置对象that的原型属性name的值为callback函数
+*/
 inline void Environment::SetProtoMethod(v8::Local<v8::FunctionTemplate> that,
                                         const char* name,
                                         v8::FunctionCallback callback) {
   v8::Local<v8::Signature> signature = v8::Signature::New(isolate(), that);
+  // 以callback为函数，新建一个函数模板
   v8::Local<v8::FunctionTemplate> t =
       NewFunctionTemplate(callback, signature, v8::ConstructorBehavior::kThrow,
                           v8::SideEffectType::kHasSideEffect);
@@ -1160,7 +1163,9 @@ inline void Environment::SetProtoMethod(v8::Local<v8::FunctionTemplate> that,
   const v8::NewStringType type = v8::NewStringType::kInternalized;
   v8::Local<v8::String> name_string =
       v8::String::NewFromUtf8(isolate(), name, type).ToLocalChecked();
+  // 拿到that的原型对象，设置属性
   that->PrototypeTemplate()->Set(name_string, t);
+  // 设置函数的名称
   t->SetClassName(name_string);  // NODE_SET_PROTOTYPE_METHOD() compatibility.
 }
 

@@ -8,7 +8,7 @@
 namespace node {
 
 class Environment;
-
+// WrapType是c++层的类，UVType是libuv的类型
 template <typename WrapType, typename UVType>
 class ConnectionWrap : public LibuvStreamWrap {
  public:

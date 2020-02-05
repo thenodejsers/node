@@ -161,6 +161,7 @@ int uv__tcp_bind(uv_tcp_t* tcp,
     return err;
 
   on = 1;
+  // 设置在断开连接的2 msl内可以重用端口
   if (setsockopt(tcp->io_watcher.fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)))
     return UV__ERR(errno);
 
