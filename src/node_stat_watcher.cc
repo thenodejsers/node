@@ -42,10 +42,10 @@ using v8::String;
 using v8::Uint32;
 using v8::Value;
 
-
+// 在node_file.cc中调用
 void StatWatcher::Initialize(Environment* env, Local<Object> target) {
   HandleScope scope(env->isolate());
-
+  // 以StateWatcher为模板，新建一个函数模板
   Local<FunctionTemplate> t = env->NewFunctionTemplate(StatWatcher::New);
   t->InstanceTemplate()->SetInternalFieldCount(1);
   Local<String> statWatcherString =
@@ -85,11 +85,13 @@ void StatWatcher::Callback(uv_fs_poll_t* handle,
   USE(fs::FillGlobalStatsArray(env, wrap->use_bigint_, prev, true));
 
   Local<Value> argv[2] = { Integer::New(env->isolate(), status), arr };
+  // 回调js层
   wrap->MakeCallback(env->onchange_string(), arraysize(argv), argv);
 }
 
-
+// js层调用new StateWatcher时调用这个函数
 void StatWatcher::New(const FunctionCallbackInfo<Value>& args) {
+  // 要用new调用
   CHECK(args.IsConstructCall());
   Environment* env = Environment::GetCurrent(args);
   new StatWatcher(env, args.This(), args[0]->IsTrue());
@@ -102,15 +104,16 @@ void StatWatcher::Start(const FunctionCallbackInfo<Value>& args) {
   StatWatcher* wrap;
   ASSIGN_OR_RETURN_UNWRAP(&wrap, args.Holder());
   CHECK(!uv_is_active(wrap->GetHandle()));
-
+  // 要监听的文件路径
   node::Utf8Value path(args.GetIsolate(), args[0]);
   CHECK_NOT_NULL(*path);
-
+  // 多久检测一下文件的stat信息（底层是通过定期获取stat信息判断文件是否改变了）
   CHECK(args[1]->IsUint32());
   const uint32_t interval = args[1].As<Uint32>()->Value();
 
   // Note that uv_fs_poll_start does not return ENOENT, we are handling
   // mostly memory errors here.
+  // 开启定期检测
   const int err = uv_fs_poll_start(&wrap->watcher_, Callback, *path, interval);
   if (err != 0) {
     args.GetReturnValue().Set(err);

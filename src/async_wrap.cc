@@ -85,7 +85,7 @@ struct AsyncWrapObject : public AsyncWrap {
   SET_MEMORY_INFO_NAME(AsyncWrapObject)
   SET_SELF_SIZE(AsyncWrapObject)
 };
-
+// nodejs退出时可能会执行该函数
 void AsyncWrap::DestroyAsyncIdsCallback(Environment* env) {
   Local<Function> fn = env->async_hooks_destroy_function();
 
@@ -462,7 +462,7 @@ void AsyncWrap::Initialize(Local<Object> target,
   Environment* env = Environment::GetCurrent(context);
   Isolate* isolate = env->isolate();
   HandleScope scope(isolate);
-
+  // 给target对象设置属性
   env->SetMethod(target, "setupHooks", SetupHooks);
   env->SetMethod(target, "pushAsyncIds", PushAsyncIds);
   env->SetMethod(target, "popAsyncIds", PopAsyncIds);
@@ -473,7 +473,7 @@ void AsyncWrap::Initialize(Local<Object> target,
 
   PropertyAttribute ReadOnlyDontDelete =
       static_cast<PropertyAttribute>(ReadOnly | DontDelete);
-
+// 设置target只读&不能删除的属性
 #define FORCE_SET_TARGET_FIELD(obj, str, field)                               \
   (obj)->DefineOwnProperty(context,                                           \
                            FIXED_ONE_BYTE_STRING(isolate, str),               \
@@ -528,9 +528,12 @@ void AsyncWrap::Initialize(Local<Object> target,
   SET_HOOKS_CONSTANT(kDefaultTriggerAsyncId);
   SET_HOOKS_CONSTANT(kStackLength);
 #undef SET_HOOKS_CONSTANT
+
+  // 设置constants属性是个对象，对象的属性为上面的"kInit,"kAfter"...，值见AsyncHooks类的枚举值 
   FORCE_SET_TARGET_FIELD(target, "constants", constants);
 
   Local<Object> async_providers = Object::New(isolate);
+// 见async_wrap.h的枚举类型ProviderType
 #define V(p)                                                                  \
   FORCE_SET_TARGET_FIELD(                                                     \
       async_providers, #p, Integer::New(isolate, AsyncWrap::PROVIDER_ ## p));
@@ -564,13 +567,13 @@ void AsyncWrap::Initialize(Local<Object> target,
   }
 }
 
-
+// 重载的构造函数
 AsyncWrap::AsyncWrap(Environment* env,
                      Local<Object> object,
                      ProviderType provider,
                      double execution_async_id)
     : AsyncWrap(env, object, provider, execution_async_id, false) {}
-
+// 真正的处理逻辑
 AsyncWrap::AsyncWrap(Environment* env,
                      Local<Object> object,
                      ProviderType provider,
