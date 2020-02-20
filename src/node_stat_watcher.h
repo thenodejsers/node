@@ -44,7 +44,7 @@ class StatWatcher : public HandleWrap {
 
   static void New(const v8::FunctionCallbackInfo<v8::Value>& args);
   static void Start(const v8::FunctionCallbackInfo<v8::Value>& args);
-
+  
   SET_NO_MEMORY_INFO()
   SET_MEMORY_INFO_NAME(StatWatcher)
   SET_SELF_SIZE(StatWatcher)

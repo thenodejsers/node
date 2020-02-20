@@ -242,6 +242,7 @@ class Heap {
     Address start;
     Address end;
   };
+  // 别名
   using Reservation = std::vector<Chunk>;
 
 #if V8_OS_ANDROID

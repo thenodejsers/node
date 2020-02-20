@@ -28,7 +28,7 @@ ConnectionWrap<WrapType, UVType>::ConnectionWrap(Environment* env,
                       reinterpret_cast<uv_stream_t*>(&handle_),
                       provider) {}
 
-
+// 有连接时触发的回调
 template <typename WrapType, typename UVType>
 void ConnectionWrap<WrapType, UVType>::OnConnection(uv_stream_t* handle,
                                                     int status) {
