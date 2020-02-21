@@ -744,7 +744,7 @@ void Environment::ScheduleTimer(int64_t duration_ms) {
 
 void Environment::ToggleTimerRef(bool ref) {
   if (started_cleanup_) return;
-
+  // 打上ref标记，
   if (ref) {
     uv_ref(reinterpret_cast<uv_handle_t*>(timer_handle()));
   } else {
@@ -783,6 +783,7 @@ void Environment::RunTimers(uv_timer_t* handle) {
   // code becomes invalid and needs to be rewritten. Otherwise catastrophic
   // timers corruption will occur and all timers behaviour will become
   // entirely unpredictable.
+  // 是否执行了所有的调
   if (ret.IsEmpty())
     return;
 
@@ -799,11 +800,16 @@ void Environment::RunTimers(uv_timer_t* handle) {
   uv_handle_t* h = reinterpret_cast<uv_handle_t*>(handle);
 
   if (expiry_ms != 0) {
+    // 算出下次超时的相对值
     int64_t duration_ms =
         llabs(expiry_ms) - (uv_now(env->event_loop()) - env->timer_base());
-
+    // 重新把handle插入libuv的二叉堆
     env->ScheduleTimer(duration_ms > 0 ? duration_ms : 1);
-
+    // 见timer.js的processTimers。
+    /*
+      正整数，说明还有节点没超时，激活定时器，
+      libuv把该handle标记位活动的，否则说明没有超时节点需要处理了，取消这标记，unref表示不影响libuv的事件循环的结束
+    */
     if (expiry_ms > 0)
       uv_ref(h);
     else
