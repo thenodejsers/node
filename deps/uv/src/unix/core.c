@@ -323,10 +323,10 @@ int uv_backend_fd(const uv_loop_t* loop) {
 int uv_backend_timeout(const uv_loop_t* loop) {
   if (loop->stop_flag != 0)
     return 0;
-
+  // 没有active的handle和request说明没有什么要处理的，libuv可以退出（根据运行模式）
   if (!uv__has_active_handles(loop) && !uv__has_active_reqs(loop))
     return 0;
-
+  // 有idle或pend_queue则返回0，不阻塞，使得回调尽快执行
   if (!QUEUE_EMPTY(&loop->idle_handles))
     return 0;
 

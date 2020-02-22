@@ -438,8 +438,9 @@ Environment::~Environment() {
 void Environment::InitializeLibuv(bool start_profiler_idle_notifier) {
   HandleScope handle_scope(isolate());
   Context::Scope context_scope(context());
-
+  // 初始化
   CHECK_EQ(0, uv_timer_init(event_loop(), timer_handle()));
+  // 置unref状态，避免没有定时器时，因为有active handle阻止libuv退出，有定时器的时候再置ref状态
   uv_unref(reinterpret_cast<uv_handle_t*>(timer_handle()));
 
   uv_check_init(event_loop(), immediate_check_handle());
@@ -848,7 +849,7 @@ void Environment::CheckImmediate(uv_check_t* handle) {
 
 void Environment::ToggleImmediateRef(bool ref) {
   if (started_cleanup_) return;
-
+  // 往idle链表插入/删除一个节点，插入节点是防止在poll io阶段阻塞
   if (ref) {
     // Idle handle is needed only to stop the event loop from blocking in poll.
     uv_idle_start(immediate_idle_handle(), [](uv_idle_t*){ });
