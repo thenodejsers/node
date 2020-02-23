@@ -6,13 +6,23 @@
 </a>
 
 其他资源：
+ <br/>
  <a href="https://zhuanlan.zhihu.com/c_1094251741922619392" target="_blank">
-    nodejs10.x源码分析
+    知乎：nodejs10.x源码分析
  </a>
  <br/>
  <a href="https://github.com/theanarkh/read-nodejs-code" target="_blank">
-    nodejs10.x源码分析
+    github：nodejs10.x源码分析
  </a>
+ <br/>
+  <a href="https://zhuanlan.zhihu.com/c_1094553212761309184" target="_blank">
+    知乎：libuv源码分析
+ </a>
+ <br/> 
+ <a href="https://github.com/theanarkh/read-libuv-code" target="_blank">
+    github：libuv源码分析
+ </a>
+ <br/>
 
 
 <p align="center">
