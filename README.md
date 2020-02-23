@@ -1,4 +1,5 @@
-本仓库是最新版的nodejs源码进行分析。会同步更新nodejs的最新版代码。欢迎交流，欢迎加入。微信theratliter。
+<strong>本仓库是最新版的nodejs源码进行分析。会同步更新nodejs的最新版代码。欢迎交流，欢迎加入。微信theratliter。</strong>
+<br/>
 文章：
 <a href="https://github.com/thenodejsers/node/blob/master/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97" target="_blank">
     源码分析系列
@@ -8,6 +9,7 @@
  <a href="https://zhuanlan.zhihu.com/c_1094251741922619392" target="_blank">
     nodejs10.x源码分析
  </a>
+ <br/>
  <a href="https://github.com/theanarkh/read-nodejs-code" target="_blank">
     nodejs10.x源码分析
  </a>
